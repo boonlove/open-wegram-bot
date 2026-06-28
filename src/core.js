@@ -100,7 +100,7 @@ export async function handleUninstall(botToken, secretToken, config) {
     }
 }
 
-export async function handleWebhook(request, ownerUid, botToken, secretToken) {
+export async function handleWebhook(request, ownerUid, botToken, secretToken, config) {
     if (secretToken !== request.headers.get('X-Telegram-Bot-Api-Secret-Token')) {
         return new Response('Unauthorized', {status: 401});
     }
@@ -132,6 +132,10 @@ export async function handleWebhook(request, ownerUid, botToken, secretToken) {
         }
 
         if ("/start" === message.text) {
+            return new Response('OK');
+        }
+
+        if (config.blacklist.includes(message.chat.id.toString())) {
             return new Response('OK');
         }
 
@@ -191,7 +195,7 @@ export async function handleRequest(request, config) {
     }
 
     if (match = path.match(WEBHOOK_PATTERN)) {
-        return handleWebhook(request, match[1], match[2], secretToken);
+        return handleWebhook(request, match[1], match[2], secretToken, config);
     }
 
     return new Response('Not Found', {status: 404});

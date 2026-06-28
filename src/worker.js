@@ -13,7 +13,8 @@ export default {
             prefix: env.PREFIX || 'public',
             secretToken: env.SECRET_TOKEN || '',
             chatIdList: (env.CHAT_ID || '').split(',').map(s => s.trim()).filter(Boolean),
-            botTokenList: (env.BOT_TOKEN || '').split(',').map(s => s.trim()).filter(Boolean)
+            botTokenList: (env.BOT_TOKEN || '').split(',').map(s => s.trim()).filter(Boolean),
+            blacklist: (env.BLACKLIST || '').split(',').map(s => s.trim()).filter(Boolean)
         };
 
         return handleRequest(request, config);
