@@ -12,8 +12,8 @@ export default {
         const config = {
             prefix: env.PREFIX || 'public',
             secretToken: env.SECRET_TOKEN || '',
-            chatId: env.CHAT_ID || '',
-            botToken: env.BOT_TOKEN || ''
+            chatIdList: (env.CHAT_ID || '').split(',').map(s => s.trim()).filter(Boolean),
+            botTokenList: (env.BOT_TOKEN || '').split(',').map(s => s.trim()).filter(Boolean)
         };
 
         return handleRequest(request, config);

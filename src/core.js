@@ -23,19 +23,20 @@ export async function postToTelegramApi(token, method, body) {
 }
 
 export async function handleInstall(request, ownerUid, botToken, prefix, secretToken, config) {
-    const {chatId, botToken: envBotToken} = config;
+    const {chatIdList, botTokenList} = config;
 
-    if (ownerUid !== chatId) {
+    if (chatIdList.length === 0 || botTokenList.length === 0) {
         return jsonResponse({
             success: false,
-            message: 'Owner UID mismatch: the provided UID does not match the configured CHAT_ID.'
-        }, 403);
+            message: 'CHAT_ID and BOT_TOKEN must be configured in environment variables.'
+        }, 400);
     }
 
-    if (botToken !== envBotToken) {
+    const botIndex = botTokenList.indexOf(botToken);
+    if (botIndex === -1 || chatIdList[botIndex] !== ownerUid) {
         return jsonResponse({
             success: false,
-            message: 'Bot token mismatch: the provided token does not match the configured BOT_TOKEN.'
+            message: 'No matching owner UID and bot token pair found. Please check your CHAT_ID and BOT_TOKEN environment variables.'
         }, 403);
     }
 
@@ -69,12 +70,12 @@ export async function handleInstall(request, ownerUid, botToken, prefix, secretT
 }
 
 export async function handleUninstall(botToken, secretToken, config) {
-    const {botToken: envBotToken} = config;
+    const {botTokenList} = config;
 
-    if (botToken !== envBotToken) {
+    if (!botTokenList.includes(botToken)) {
         return jsonResponse({
             success: false,
-            message: 'Token mismatch: the provided token does not match the configured BOT_TOKEN.'
+            message: 'The provided bot token is not configured in BOT_TOKEN environment variable.'
         }, 403);
     }
 
