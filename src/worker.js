@@ -11,7 +11,9 @@ export default {
     async fetch(request, env, ctx) {
         const config = {
             prefix: env.PREFIX || 'public',
-            secretToken: env.SECRET_TOKEN || ''
+            secretToken: env.SECRET_TOKEN || '',
+            chatId: env.CHAT_ID || '',
+            botToken: env.BOT_TOKEN || ''
         };
 
         return handleRequest(request, config);

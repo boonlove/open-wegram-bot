@@ -22,7 +22,23 @@ export async function postToTelegramApi(token, method, body) {
     });
 }
 
-export async function handleInstall(request, ownerUid, botToken, prefix, secretToken) {
+export async function handleInstall(request, ownerUid, botToken, prefix, secretToken, config) {
+    const {chatId, botToken: envBotToken} = config;
+
+    if (ownerUid !== chatId) {
+        return jsonResponse({
+            success: false,
+            message: 'Owner UID mismatch: the provided UID does not match the configured CHAT_ID.'
+        }, 403);
+    }
+
+    if (botToken !== envBotToken) {
+        return jsonResponse({
+            success: false,
+            message: 'Bot token mismatch: the provided token does not match the configured BOT_TOKEN.'
+        }, 403);
+    }
+
     if (!validateSecretToken(secretToken)) {
         return jsonResponse({
             success: false,
@@ -52,7 +68,16 @@ export async function handleInstall(request, ownerUid, botToken, prefix, secretT
     }
 }
 
-export async function handleUninstall(botToken, secretToken) {
+export async function handleUninstall(botToken, secretToken, config) {
+    const {botToken: envBotToken} = config;
+
+    if (botToken !== envBotToken) {
+        return jsonResponse({
+            success: false,
+            message: 'Token mismatch: the provided token does not match the configured BOT_TOKEN.'
+        }, 403);
+    }
+
     if (!validateSecretToken(secretToken)) {
         return jsonResponse({
             success: false,
@@ -157,11 +182,11 @@ export async function handleRequest(request, config) {
     let match;
 
     if (match = path.match(INSTALL_PATTERN)) {
-        return handleInstall(request, match[1], match[2], prefix, secretToken);
+        return handleInstall(request, match[1], match[2], prefix, secretToken, config);
     }
 
     if (match = path.match(UNINSTALL_PATTERN)) {
-        return handleUninstall(match[1], secretToken);
+        return handleUninstall(match[1], secretToken, config);
     }
 
     if (match = path.match(WEBHOOK_PATTERN)) {
