@@ -14,7 +14,8 @@ export default {
             secretToken: env.SECRET_TOKEN || '',
             chatIdList: (env.CHAT_ID || '').split(',').map(s => s.trim()).filter(Boolean),
             botTokenList: (env.BOT_TOKEN || '').split(',').map(s => s.trim()).filter(Boolean),
-            blacklist: (env.BLACKLIST || '').split(',').map(s => s.trim()).filter(Boolean)
+            blacklist: (env.BLACKLIST || '').split(',').map(s => s.trim()).filter(Boolean),
+            kv: env.KV
         };
 
         return handleRequest(request, config);
