@@ -3,6 +3,9 @@
  * Shared code between Cloudflare Worker and Vercel deployments
  */
 
+const getBlacklistKey = (ownerUid) => `blacklist_${ownerUid}`;
+const getStaticBlacklist = (config) => config.blacklist || [];
+
 export function validateSecretToken(token) {
     return token.length > 15 && /[A-Z]/.test(token) && /[a-z]/.test(token) && /[0-9]/.test(token);
 }
@@ -136,8 +139,6 @@ async function handleCommand(message, ownerUid, botToken, config) {
     const parts = text.split(' ');
     const cmd = parts[0].toLowerCase();
     const arg = parts.slice(1).join(' ').trim();
-    const KV_BLACKLIST_KEY = `blacklist_${ownerUid}`;
-    const STATIC_BLACKLIST = config.blacklist;
 
     // /start — silently ignore
     if (cmd === '/start') {
@@ -178,11 +179,11 @@ async function handleCommand(message, ownerUid, botToken, config) {
                 return new Response('OK');
             }
             if (config.kv) {
-                const current = await config.kv.get(KV_BLACKLIST_KEY) || '';
+                const current = await config.kv.get(getBlacklistKey(ownerUid)) || '';
                 const list = current.split(',').filter(Boolean);
                 if (!list.includes(targetUid)) {
                     list.push(targetUid);
-                    await config.kv.put(KV_BLACKLIST_KEY, list.join(','));
+                    await config.kv.put(getBlacklistKey(ownerUid), list.join(','));
                     await postToTelegramApi(botToken, 'sendMessage', {
                         chat_id: parseInt(ownerUid),
                         text: `✅ 已拉黑用户 ${targetUid}`
@@ -207,11 +208,11 @@ async function handleCommand(message, ownerUid, botToken, config) {
                 return new Response('OK');
             }
             if (config.kv) {
-                const current = await config.kv.get(KV_BLACKLIST_KEY) || '';
+                const current = await config.kv.get(getBlacklistKey(ownerUid)) || '';
                 const list = current.split(',').filter(Boolean);
                 const filtered = list.filter(uid => uid !== targetUid);
                 if (list.length !== filtered.length) {
-                    await config.kv.put(KV_BLACKLIST_KEY, filtered.join(','));
+                    await config.kv.put(getBlacklistKey(ownerUid), filtered.join(','));
                     await postToTelegramApi(botToken, 'sendMessage', {
                         chat_id: parseInt(ownerUid),
                         text: `✅ 已解封用户 ${targetUid}`
@@ -229,7 +230,7 @@ async function handleCommand(message, ownerUid, botToken, config) {
         // /banlist or /bans — list all blacklisted users
         if (cmd === '/banlist' || cmd === '/bans') {
             if (config.kv) {
-                const current = await config.kv.get(KV_BLACKLIST_KEY) || '';
+                const current = await config.kv.get(getBlacklistKey(ownerUid)) || '';
                 const list = current.split(',').filter(Boolean);
                 await postToTelegramApi(botToken, 'sendMessage', {
                     chat_id: parseInt(ownerUid),
@@ -240,8 +241,8 @@ async function handleCommand(message, ownerUid, botToken, config) {
             } else {
                 await postToTelegramApi(botToken, 'sendMessage', {
                     chat_id: parseInt(ownerUid),
-                    text: STATIC_BLACKLIST.length
-                        ? `📋 静态黑名单 (${STATIC_BLACKLIST.length}人):\n${STATIC_BLACKLIST.join('\n')}`
+                    text: getStaticBlacklist(config).length
+                        ? `📋 静态黑名单 (${getStaticBlacklist(config).length}人):\n${getStaticBlacklist(config).join('\n')}`
                         : '📋 静态黑名单为空'
                 });
             }
@@ -260,9 +261,25 @@ async function handleCommand(message, ownerUid, botToken, config) {
     }
 }
 
+async function isBlacklisted(chatId, ownerUid, config) {
+    // Owner is never blacklisted
+    if (chatId === ownerUid) {
+        return false;
+    }
+
+    // Load blacklist list: KV → static env var fallback
+    let list = [];
+    if (config.kv) {
+        const raw = await config.kv.get(getBlacklistKey(ownerUid)) || '';
+        list = raw.split(',').filter(Boolean);
+    } else {
+        list = getStaticBlacklist(config) || [];
+    }
+
+    return list.includes(chatId);
+}
+
 async function handleMessage(message, ownerUid, botToken, config) {
-    const KV_BLACKLIST_KEY = `blacklist_${ownerUid}`;
-    const STATIC_BLACKLIST = config.blacklist;
     try {
         const reply = message.reply_to_message;
 
@@ -295,15 +312,8 @@ async function handleMessage(message, ownerUid, botToken, config) {
             return new Response('OK');
         }
 
-        // Blacklist check: KV → static env var fallback
-        let blacklist = [];
-        if (config.kv) {
-            const raw = await config.kv.get(KV_BLACKLIST_KEY) || '';
-            blacklist = raw.split(',').filter(Boolean);
-        } else {
-            blacklist = STATIC_BLACKLIST || [];
-        }
-        if (blacklist.includes(message.chat.id.toString())) {
+        // Blacklist check
+        if (await isBlacklisted(message.chat.id.toString(), ownerUid, config)) {
             return new Response('OK');
         }
 
