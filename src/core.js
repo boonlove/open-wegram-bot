@@ -10,6 +10,10 @@ export function validateSecretToken(token) {
     return token.length > 15 && /[A-Z]/.test(token) && /[a-z]/.test(token) && /[0-9]/.test(token);
 }
 
+export function validateChatId(chatId) {
+    return chatId.length > 5 && /^-?\d+$/.test(chatId);
+}
+
 export function jsonResponse(data, status = 200) {
     return new Response(JSON.stringify(data), {
         status,
@@ -178,6 +182,13 @@ async function handleCommand(message, ownerUid, botToken, config) {
                 });
                 return new Response('OK');
             }
+            if (!validateChatId(targetUid)) {
+                await postToTelegramApi(botToken, 'sendMessage', {
+                    chat_id: parseInt(ownerUid),
+                    text: '⚠️ 操作失败，非法的UID'
+                });
+                return new Response('OK');
+            }
             if (config.kv) {
                 const current = await config.kv.get(getBlacklistKey(ownerUid)) || '';
                 const list = current.split(',').filter(Boolean);
@@ -204,6 +215,13 @@ async function handleCommand(message, ownerUid, botToken, config) {
                 await postToTelegramApi(botToken, 'sendMessage', {
                     chat_id: parseInt(ownerUid),
                     text: '用法: /unban <用户UID>\n或回复转发消息发送 /unban'
+                });
+                return new Response('OK');
+            }
+            if (!validateChatId(targetUid)) {
+                await postToTelegramApi(botToken, 'sendMessage', {
+                    chat_id: parseInt(ownerUid),
+                    text: '⚠️ 操作失败，非法的UID'
                 });
                 return new Response('OK');
             }
