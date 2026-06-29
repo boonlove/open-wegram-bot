@@ -54,7 +54,7 @@ export async function handleInstall(request, ownerUid, botToken, prefix, secretT
     try {
         const response = await postToTelegramApi(botToken, 'setWebhook', {
             url: webhookUrl,
-            allowed_updates: ['message'],
+            allowed_updates: ['message', 'edited_message'],
             secret_token: secretToken
         });
 
@@ -106,6 +106,15 @@ export async function handleWebhook(request, ownerUid, botToken, secretToken, co
     }
 
     const update = await request.json();
+
+    // Handle edited messages — re-forward non-owner edits to owner
+    if (update.edited_message) {
+        if (ownerUid !== update.edited_message.chat.id.toString()) {
+            return handleMessage(update.edited_message, ownerUid, botToken, config);
+        }
+        return new Response('OK');
+    }
+
     if (!update.message) {
         return new Response('OK');
     }
