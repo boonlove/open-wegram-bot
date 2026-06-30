@@ -27,6 +27,14 @@ export async function handleBanCommand(targetUid, ownerUid, botToken, config) {
         return;
     }
 
+    if (targetUid === config.adminUid || targetUid === ownerUid) {
+        await postToTelegramApi(botToken, 'sendMessage', {
+            chat_id: parseInt(ownerUid),
+            text: '⚠️ 禁止拉黑系统管理员或Bot所有者'
+        });
+        return;
+    }
+
     if (!config.kv) return;
 
     const ok = await addToBlacklist(config.kv, ownerUid, targetUid);
