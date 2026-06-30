@@ -95,6 +95,11 @@ export async function handleEditedMessage(editedMessage, ownerUid, botToken, con
             return new Response('OK');
         }
 
+        // 黑名单检查
+        if (await isBlacklisted(editedMessage.chat.id.toString(), ownerUid, config)) {
+            return new Response('OK');
+        }
+
         const sender = editedMessage.chat;
         const senderUid = sender.id.toString();
         const senderName = sender.username

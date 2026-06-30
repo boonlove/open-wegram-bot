@@ -30,30 +30,30 @@ export async function removeFromBlacklist(kv, ownerUid, targetUid) {
 
 // ── 多 Bot 列表 ──
 
-export async function getBotPairList(kv, adminUid) {
-    const chatIds = (await kv.get(getChatIdListKey(adminUid)) || '').split(',').filter(Boolean);
-    const botTokens = (await kv.get(getBotTokenListKey(adminUid)) || '').split(',').filter(Boolean);
+export async function getBotPairList(kv) {
+    const chatIds = (await kv.get(getChatIdListKey()) || '').split(',').filter(Boolean);
+    const botTokens = (await kv.get(getBotTokenListKey()) || '').split(',').filter(Boolean);
     return { chatIds, botTokens };
 }
 
-export async function addBotPair(kv, adminUid, chatId, token) {
-    const { chatIds, botTokens } = await getBotPairList(kv, adminUid);
+export async function addBotPair(kv, chatId, token) {
+    const { chatIds, botTokens } = await getBotPairList(kv);
     if (botTokens.includes(token)) return false;
     chatIds.push(chatId);
     botTokens.push(token);
-    await kv.put(getChatIdListKey(adminUid), chatIds.join(','));
-    await kv.put(getBotTokenListKey(adminUid), botTokens.join(','));
+    await kv.put(getChatIdListKey(), chatIds.join(','));
+    await kv.put(getBotTokenListKey(), botTokens.join(','));
     return true;
 }
 
-export async function removeBotPair(kv, adminUid, token) {
-    const { chatIds, botTokens } = await getBotPairList(kv, adminUid);
+export async function removeBotPair(kv, token) {
+    const { chatIds, botTokens } = await getBotPairList(kv);
     const idx = botTokens.indexOf(token);
     if (idx === -1) return false;
     chatIds.splice(idx, 1);
     botTokens.splice(idx, 1);
-    await kv.put(getChatIdListKey(adminUid), chatIds.join(','));
-    await kv.put(getBotTokenListKey(adminUid), botTokens.join(','));
+    await kv.put(getChatIdListKey(), chatIds.join(','));
+    await kv.put(getBotTokenListKey(), botTokens.join(','));
     return true;
 }
 
@@ -64,7 +64,7 @@ export async function isBotAuthorized(kv, adminUid, adminBotToken, ownerUid, bot
     if (ownerUid === adminUid && botToken === adminBotToken) return true;
     // KV 列表中的 Bot
     if (!kv) return false;
-    const { chatIds, botTokens } = await getBotPairList(kv, adminUid);
+    const { chatIds, botTokens } = await getBotPairList(kv);
     const idx = botTokens.indexOf(botToken);
     return idx !== -1 && chatIds[idx] === ownerUid;
 }
@@ -72,6 +72,6 @@ export async function isBotAuthorized(kv, adminUid, adminBotToken, ownerUid, bot
 export async function isTokenInList(kv, adminUid, adminBotToken, botToken) {
     if (botToken === adminBotToken) return true;
     if (!kv) return false;
-    const { botTokens } = await getBotPairList(kv, adminUid);
+    const { botTokens } = await getBotPairList(kv);
     return botTokens.includes(botToken);
 }

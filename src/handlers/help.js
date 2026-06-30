@@ -4,13 +4,15 @@
 
 import { postToTelegramApi } from '../services/telegramService.js';
 
-export async function handleHelp(adminUid, botToken) {
+export async function handleHelp(ownerUid, botToken) {
     await postToTelegramApi(botToken, 'sendMessage', {
-        chat_id: parseInt(adminUid),
+        chat_id: parseInt(ownerUid),
         text: '🤖 可用命令:\n\n'
             + '/ban <UID> — 拉黑用户 (或回复转发消息发送 /ban)\n'
             + '/unban <UID> — 解封用户 (或回复转发消息发送 /unban)\n'
             + '/banlist /bans — 查看黑名单\n'
+            + '/addbot <UID> <Token> — 添加 Bot\n'
+            + '/delbot <Token> — 删除 Bot\n'
             + '/help — 显示此帮助'
     });
 }

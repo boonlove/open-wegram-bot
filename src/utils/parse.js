@@ -9,3 +9,7 @@ export function validateSecretToken(token) {
 export function validateChatId(chatId) {
     return chatId.length > 5 && /^-?\d+$/.test(chatId);
 }
+
+export function validateBotToken(token) {
+    return /^\d{5,12}:[A-Za-z0-9_-]{20,100}$/.test(token);
+}

@@ -4,5 +4,5 @@
 
 export const getBlacklistKey = (ownerUid) => `blacklist_${ownerUid}`;
 export const getStaticBlacklist = (config) => config.blacklist || [];
-export const getChatIdListKey = (adminUid) => `chatid_list_${adminUid}`;
-export const getBotTokenListKey = (adminUid) => `bottoken_list_${adminUid}`;
+export const getChatIdListKey = () => 'chatid_list';
+export const getBotTokenListKey = () => 'bottoken_list';

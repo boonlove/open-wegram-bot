@@ -4,6 +4,14 @@
 
 import { ROLE_ADMIN, resolveRole } from '../config/permissions.js';
 
+export function isAdmin(uid, config) {
+    return config.adminUid === uid;
+}
+
+export function isOwner(uid, ownerUid) {
+    return uid === ownerUid;
+}
+
 export function isAdminMessage(message, config) {
     return config.adminUid === message?.chat?.id?.toString();
 }

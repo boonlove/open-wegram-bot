@@ -3,7 +3,7 @@
  * 解析 update → 路由到命令处理 / 消息转发
  */
 
-import { isAdminMessage } from '../middleware/auth.js';
+import { isOwnerMessage } from '../middleware/auth.js';
 import { handleMessage, handleEditedMessage } from '../handlers/forward.js';
 import { handleCommand } from './command.js';
 
@@ -28,10 +28,9 @@ export async function handleWebhook(request, ownerUid, botToken, config) {
     }
 
     const message = update.message;
-    const senderId = message.chat?.id?.toString();
 
-    // 管理员命令
-    if (isAdminMessage(message, config) && message.text?.startsWith('/')) {
+    // 命令路由：bot_owner 可使用命令
+    if (message.text?.startsWith('/') && isOwnerMessage(message, ownerUid)) {
         return handleCommand(message, ownerUid, botToken, config);
     }
 
